@@ -1,0 +1,1892 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Horizon Multi-Generation Protection — Actuarial Pricing Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    /* === DARK NAVY LUXURY PALETTE === */
+    --bg: #0a0e1a;
+    --bg2: #0d1120;
+    --surface: #111827;
+    --surface2: #162033;
+    --surface3: #1a2640;
+    --border: #1e2d45;
+    --border-soft: #192338;
+    --border-bright: #2a3f5f;
+
+    /* === GOLD ACCENT SYSTEM === */
+    --gold: #c8a45a;
+    --gold-light: #e2c27d;
+    --gold-dim: #8a6e3a;
+    --gold-bg: rgba(200,164,90,0.08);
+    --gold-bg-soft: rgba(200,164,90,0.04);
+    --gold-border: rgba(200,164,90,0.2);
+
+    /* === ACCENT BLUE (subtle) === */
+    --accent: #4a90d9;
+    --accent-soft: rgba(74,144,217,0.12);
+    --accent-border: rgba(74,144,217,0.25);
+
+    /* === SEMANTIC COLORS === */
+    --green: #34d399;
+    --green-bg: rgba(52,211,153,0.08);
+    --red: #f87171;
+    --red-bg: rgba(248,113,113,0.08);
+    --teal: #2dd4bf;
+    --teal-bg: rgba(45,212,191,0.08);
+    --amber: #fbbf24;
+    --amber-bg: rgba(251,191,36,0.08);
+
+    /* === TYPOGRAPHY === */
+    --text: #e8eaf0;
+    --text-secondary: #9aa3b4;
+    --text-muted: #5a6478;
+    --text-dim: #3a4256;
+
+    /* === SHADOWS === */
+    --shadow-sm: 0 1px 4px rgba(0,0,0,0.4);
+    --shadow-md: 0 4px 16px rgba(0,0,0,0.5), 0 1px 4px rgba(0,0,0,0.3);
+    --shadow-lg: 0 12px 40px rgba(0,0,0,0.6), 0 4px 12px rgba(0,0,0,0.4);
+    --shadow-gold: 0 0 20px rgba(200,164,90,0.15);
+
+    /* === FONT STACKS === */
+    --mono: 'JetBrains Mono', monospace;
+    --display: 'Sora', sans-serif;
+    --sans: 'Plus Jakarta Sans', sans-serif;
+
+    /* === RADIUS === */
+    --radius: 12px;
+    --radius-sm: 8px;
+    --radius-lg: 18px;
+  }
+
+  * { margin:0; padding:0; box-sizing:border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(200,164,90,0.04) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(74,144,217,0.04) 0%, transparent 50%);
+  }
+
+  /* === HEADER === */
+  .header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 1px 0 var(--border), 0 4px 20px rgba(0,0,0,0.5);
+  }
+
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim) 30%, var(--gold) 50%, var(--gold-dim) 70%, transparent);
+    opacity: 0.4;
+  }
+
+  .logo { display:flex; align-items:center; gap:14px; }
+
+  .logo-icon {
+    width: 38px;
+    height: 38px;
+    background: var(--gold-bg);
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--display);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--gold);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .logo-text h1 {
+    font-family: var(--display);
+    font-size: 15px;
+    color: var(--text);
+    font-weight: 700;
+    letter-spacing: -0.2px;
+  }
+
+  .logo-text p {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .header-badges { display:flex; gap:6px; align-items:center; }
+
+  .hbadge {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1px;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .hbadge.gold {
+    background: var(--gold-bg);
+    border-color: var(--gold-border);
+    color: var(--gold);
+  }
+
+  /* === LAYOUT === */
+  .main {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* === SIDEBAR === */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 22px 18px;
+    overflow-y: auto;
+    max-height: calc(100vh - 64px);
+    position: sticky;
+    top: 64px;
+  }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 14px;
+    margin-top: 4px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    opacity: 0.9;
+  }
+
+  .section-title::before {
+    content: '';
+    width: 20px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .field-group { margin-bottom: 14px; }
+
+  label {
+    display: block;
+    font-size: 11px;
+    color: var(--text-secondary);
+    margin-bottom: 6px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  label .hint {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+  }
+
+  select, input[type="number"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-family: var(--sans);
+    outline: none;
+    transition: all 0.2s;
+    font-weight: 500;
+  }
+
+  select:focus, input[type="number"]:focus {
+    border-color: var(--gold-dim);
+    background: var(--surface3);
+    box-shadow: 0 0 0 3px rgba(200,164,90,0.08);
+  }
+
+  select option { background: var(--surface2); }
+
+  input[type="range"] {
+    width: 100%;
+    accent-color: var(--gold);
+    cursor: pointer;
+    height: 4px;
+    margin-top: 4px;
+  }
+
+  .range-val {
+    display: inline-block;
+    background: var(--gold-bg);
+    color: var(--gold);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 1px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--gold-border);
+    margin-left: 6px;
+  }
+
+  .radio-group { display:flex; flex-direction:column; gap:5px; }
+
+  .radio-opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 11px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-weight: 500;
+  }
+
+  .radio-opt:hover {
+    border-color: var(--border-bright);
+    background: var(--surface3);
+    color: var(--text);
+  }
+
+  .radio-opt input { accent-color: var(--gold); }
+
+  .radio-opt.active {
+    border-color: var(--gold-border);
+    background: var(--gold-bg);
+    color: var(--gold-light);
+  }
+
+  .calc-btn {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--gold-dim), var(--gold));
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #0a0e1a;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--display);
+    letter-spacing: 0.5px;
+    margin-top: 10px;
+    box-shadow: 0 4px 14px rgba(200,164,90,0.25);
+    text-transform: uppercase;
+  }
+
+  .calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(200,164,90,0.35);
+    background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  }
+
+  .calc-btn:active { transform: translateY(0); }
+
+  .sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 18px 0 14px;
+    position: relative;
+  }
+
+  /* === CONTENT === */
+  .content {
+    padding: 26px 28px;
+    overflow-y: auto;
+    background: var(--bg2);
+  }
+
+  /* === TABS === */
+  .tabs {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 22px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 4px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border);
+    overflow-x: auto;
+  }
+
+  .tab {
+    padding: 8px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.15s;
+    white-space: nowrap;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .tab:hover {
+    color: var(--gold);
+    background: var(--gold-bg);
+  }
+
+  .tab.active {
+    color: #0a0e1a;
+    background: var(--gold);
+    font-weight: 700;
+  }
+
+  .tab-panel { display:none; }
+  .tab-panel.active { display:block; }
+
+  /* === RESULT HERO === */
+  .result-hero {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+
+  .result-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim) 20%, var(--gold) 50%, var(--gold-dim) 80%, transparent);
+  }
+
+  .result-hero::after {
+    content: '';
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, rgba(200,164,90,0.06), transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .hero-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .hero-value {
+    font-family: var(--display);
+    font-size: 44px;
+    color: var(--gold-light);
+    letter-spacing: -1.5px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(200,164,90,0.3);
+  }
+
+  .hero-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+  }
+
+  .hero-pulse {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    background: var(--green);
+    border-radius: 50%;
+    margin-right: 8px;
+    animation: pulse 2s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(52,211,153,0.5);
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity:1; transform:scale(1); }
+    50% { opacity:0.5; transform:scale(0.8); }
+  }
+
+  /* === KPI GRID === */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 18px;
+  }
+
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 15px 16px;
+    transition: all 0.15s;
+    box-shadow: var(--shadow-sm);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 100%;
+    background: var(--gold-dim);
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .kpi:hover {
+    border-color: var(--border-bright);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-1px);
+  }
+
+  .kpi:hover::before { opacity: 1; }
+
+  .kpi-label {
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .kpi-val {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: var(--display);
+  }
+
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    font-family: var(--mono);
+  }
+
+  /* === TABLE === */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .table-header {
+    padding: 13px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface2);
+  }
+
+  .table-header h3 {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text);
+    font-family: var(--display);
+    letter-spacing: 0.2px;
+  }
+
+  .table-header span {
+    font-family: var(--mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead th {
+    padding: 9px 14px;
+    text-align: left;
+    font-family: var(--mono);
+    font-size: 9px;
+    letter-spacing: 1.5px;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-weight: 600;
+  }
+
+  tbody td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border-soft);
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-secondary);
+  }
+
+  tbody tr:hover td {
+    background: rgba(200,164,90,0.03);
+    color: var(--text);
+  }
+
+  tbody tr:last-child td { border-bottom: none; }
+
+  td.highlight { color: var(--gold); font-weight: 600; }
+  td.green { color: var(--green); font-weight: 500; }
+  td.gold { color: var(--amber); font-weight: 500; }
+  td.red { color: var(--red); font-weight: 500; }
+
+  /* === FORMULA BOX === */
+  .formula-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .formula-box h4 {
+    font-size: 12px;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    font-family: var(--display);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .formula-box h4::before {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--gold), transparent);
+  }
+
+  .formula {
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.9;
+    white-space: pre-wrap;
+    font-family: var(--mono);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 14px 16px;
+    border-radius: var(--radius-sm);
+  }
+
+  .formula-note {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 10px;
+    line-height: 1.7;
+    font-style: italic;
+    font-family: var(--mono);
+  }
+
+  /* === SENSITIVITY === */
+  .sens-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+
+  .sens-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .sens-card h4 {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 14px;
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  /* === CHART BARS === */
+  .bar-chart { margin-top: 8px; }
+
+  .bar-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .bar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 60px;
+    text-align: right;
+  }
+
+  .bar-track {
+    flex: 1;
+    height: 8px;
+    background: var(--surface2);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+    opacity: 0.85;
+  }
+
+  .bar-num {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text-muted);
+    width: 80px;
+  }
+
+  /* === BENEFIT TABLE === */
+  .benefit-phase {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .phase-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 9px;
+    font-family: var(--mono);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+    font-weight: 700;
+  }
+
+  .phase-badge.accum {
+    background: var(--accent-soft);
+    color: var(--accent);
+    border: 1px solid var(--accent-border);
+  }
+
+  .phase-badge.distrib {
+    background: var(--gold-bg);
+    color: var(--gold);
+    border: 1px solid var(--gold-border);
+  }
+
+  /* === LOADING === */
+  .loading { display:none; text-align:center; padding:60px 20px; }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 40px;
+    background: var(--surface);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border);
+  }
+
+  .empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.2;
+    filter: grayscale(1);
+  }
+
+  .empty-state h3 {
+    font-family: var(--display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+  }
+
+  .empty-state p {
+    font-size: 13px;
+    line-height: 1.7;
+    max-width: 380px;
+    margin: 0 auto;
+    color: var(--text-muted);
+  }
+
+  .empty-state strong { color: var(--gold); }
+
+  .info-box {
+    background: var(--teal-bg);
+    border: 1px solid rgba(45,212,191,0.15);
+    border-radius: var(--radius-sm);
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-family: var(--mono);
+  }
+
+  .info-box strong { color: var(--teal); font-weight: 700; }
+
+  .rider-grid {
+    display: grid;
+    grid-template-columns: repeat(2,1fr);
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .rider-item {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .rider-item span:first-child {
+    font-size: 11px;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-family: var(--mono);
+  }
+
+  .rider-pct {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 11px;
+    margin-bottom: 14px;
+    font-weight: 500;
+    font-family: var(--mono);
+  }
+
+  .alert.warn {
+    background: var(--amber-bg);
+    border: 1px solid rgba(251,191,36,0.2);
+    color: var(--amber);
+  }
+
+  .alert.info {
+    background: var(--green-bg);
+    border: 1px solid rgba(52,211,153,0.2);
+    color: var(--green);
+  }
+
+  /* === MOBILE RESPONSIVE === */
+  @media (max-width: 860px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { position: static; max-height: none; border-right: none; border-bottom: 1px solid var(--border); }
+    .content { padding: 18px 16px; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+    .kpi-grid.four { grid-template-columns: repeat(2, 1fr); }
+    .header { padding: 0 16px; }
+    .header-badges { display:none; }
+    .hero-value { font-size: 32px; }
+    .result-hero { padding: 20px 22px; }
+    .tabs { gap: 2px; }
+    .tab { padding: 6px 10px; font-size: 10px; }
+    .sens-grid { grid-template-columns: 1fr; }
+    .rider-grid { grid-template-columns: 1fr; }
+  }
+
+  @media (max-width: 480px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr; }
+    .logo-text p { display: none; }
+    .hero-sub { font-size: 10px; }
+  }
+</style>
+
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">H</div>
+    <div class="logo-text">
+      <h1>Horizon Multi-Generation Protection</h1>
+      <p>Actuarial Pricing Engine · TMI 2019 · MLC Framework</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="hbadge">Clayton Copula θ=2</span>
+    <span class="hbadge">Triple Decrement</span>
+    <span class="hbadge gold">Multi Life With Joint Annuity Base</span>
+  </div>
+</div>
+
+<div class="main">
+  <!-- SIDEBAR INPUT -->
+  <div class="sidebar">
+    <div class="section-title">Profil Tertanggung</div>
+
+    <div class="field-group">
+      <label>Jenis Kelamin Tertanggung X <span class="hint">(primary)</span></label>
+      <select id="genderX">
+        <option value="M">Laki-laki</option>
+        <option value="F">Perempuan</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>Usia Masuk Tertanggung X <span class="hint">(25–40)</span></label>
+      <input type="number" id="ageX" min="25" max="40" value="30">
+    </div>
+    <div class="field-group">
+      <label>Jenis Kelamin Tertanggung Y <span class="hint">(secondary)</span></label>
+      <select id="genderY">
+        <option value="F">Perempuan</option>
+        <option value="M">Laki-laki</option>
+      </select>
+    </div>
+    <div class="field-group">
+      <label>Usia Masuk Tertanggung Y <span class="hint">(25–40)</span></label>
+      <input type="number" id="ageY" min="25" max="40" value="28">
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="section-title">Produk & Benefit</div>
+
+    <div class="field-group">
+      <label>Uang Pertanggungan</label>
+      <div class="radio-group" id="upGroup">
+        <label class="radio-opt active">
+          <input type="radio" name="up" value="800" checked> Rp 800 Juta
+        </label>
+        <label class="radio-opt">
+          <input type="radio" name="up" value="1000"> Rp 1 Miliar
+        </label>
+        <label class="radio-opt">
+          <input type="radio" name="up" value="1500"> Rp 1,5 Miliar
+        </label>
+      </div>
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="section-title">Asumsi Aktuaria</div>
+
+    <div class="field-group">
+      <label>Skenario Suku Bunga</label>
+      <select id="iScenario">
+        <option value="base">Base — Yield SBN 10Y −50bps (≥4.5%)</option>
+        <option value="pessimistic">Pesimis — Floor 4.5% flat</option>
+        <option value="optimistic">Optimis — Yield SBN 10Y flat</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>Parameter Clayton Copula θ <span class="range-val" id="thetaLabel">2.0</span></label>
+      <input type="range" id="theta" min="0.5" max="5" step="0.5" value="2">
+    </div>
+
+    <div class="field-group">
+      <label>Margin Mortality Load <span class="range-val" id="mortLoadLabel">100%</span></label>
+      <input type="range" id="mortLoad" min="100" max="130" step="5" value="100">
+    </div>
+
+    <div class="sidebar-divider"></div>
+    <div class="section-title">Rider Tambahan</div>
+    <div class="field-group">
+      <div class="radio-group">
+        <label class="radio-opt"><input type="checkbox" id="rTPD"> TPD Rider (60% UP)</label>
+        <label class="radio-opt"><input type="checkbox" id="rCI"> Critical Illness Rider (40% UP)</label>
+        <label class="radio-opt"><input type="checkbox" id="rCOLA"> COLA Rider (3.5%/thn)</label>
+        <label class="radio-opt"><input type="checkbox" id="rAcc"> Accident Rider (25% UP)</label>
+        <label class="radio-opt"><input type="checkbox" id="rPWB"> Premium Waiver Benefit</label>
+      </div>
+    </div>
+
+    <button class="calc-btn" onclick="calculate()">⚡ Hitung Premi Aktuaria</button>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+    <div id="emptyState" class="empty-state">
+      <div class="icon">∑</div>
+      <h3>Pricing Engine Siap</h3>
+      <p>Isi parameter di sebelah kiri dan klik <strong>"Hitung Premi Aktuaria"</strong> untuk menjalankan kalkulasi lengkap berbasis MLC framework dengan TMI 2019.</p>
+    </div>
+
+    <div id="loadingState" class="loading">
+      <div class="spinner"></div>
+      <p style="font-family:var(--mono); font-size:12px; color:var(--text-muted);">Menjalankan kalkulasi aktuaria...</p>
+    </div>
+
+    <div id="results" style="display:none;">
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('summary')">Ringkasan Premi</div>
+        <div class="tab" onclick="switchTab('reserve')">Cadangan & APV</div>
+        <div class="tab" onclick="switchTab('decrement')">Triple Decrement</div>
+        <div class="tab" onclick="switchTab('benefits')">Benefit Structure</div>
+        <div class="tab" onclick="switchTab('sensitivity')">Sensitivity Analysis</div>
+        <div class="tab" onclick="switchTab('formulas')">Formulasi MLC</div>
+      </div>
+
+      <!-- TAB: SUMMARY -->
+      <div class="tab-panel active" id="tab-summary">
+        <div class="result-hero">
+          <div class="hero-label">Premi Bulanan Bruto (Net + Loading)</div>
+          <div class="hero-value" id="premiumDisplay">—</div>
+          <div class="hero-sub"><span class="hero-pulse"></span><span id="premiumSub">—</span></div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">Premi Netto</div>
+            <div class="kpi-val" id="netPremium">—</div>
+            <div class="kpi-sub">sebelum loading</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">APV Benefit</div>
+            <div class="kpi-val" id="apvBenefit">—</div>
+            <div class="kpi-sub">PV expected benefit</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">äxy (annuity-due)</div>
+            <div class="kpi-val" id="jointAnnuity">—</div>
+            <div class="kpi-sub">joint life annuity</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Durasi Polis</div>
+            <div class="kpi-val" id="policyDuration">—</div>
+            <div class="kpi-sub">fase akumulasi</div>
+          </div>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">APV Death Benefit</div>
+            <div class="kpi-val" id="apvDeath">—</div>
+            <div class="kpi-sub">expected PV mortality</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">APV Annuity</div>
+            <div class="kpi-val" id="apvAnnuity">—</div>
+            <div class="kpi-sub">retirement phase</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">APV Riders</div>
+            <div class="kpi-val" id="apvRiders">—</div>
+            <div class="kpi-sub">tambahan benefit</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Profit Margin</div>
+            <div class="kpi-val" id="profitMargin">—</div>
+            <div class="kpi-sub">target perusahaan</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Breakdown Komponen Premi</h3>
+            <span>PREMI BRUTO = NETTO + LOADING</span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead>
+              <tr>
+                <th>Komponen</th><th>Nominal (Rp)</th><th>% dari Premi Bruto</th><th>Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="premBreakdown"></tbody>
+          </table></div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Ilustrasi Premi per Tier Benefit</h3>
+            <span>BERDASARKAN USIA TERTANGGUNG X = <span id="ageXlabel">—</span></span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead>
+              <tr><th>UP</th><th>Premi Netto/bln</th><th>Premi Bruto/bln</th><th>Loading</th><th>Profit Load</th></tr>
+            </thead>
+            <tbody id="tierTable"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: RESERVE -->
+      <div class="tab-panel" id="tab-reserve">
+        <div class="info-box">
+          <strong>Joint Life Reserve (Prospective Method):</strong> 
+          tV = APV(future benefits) − P · äxy:n-t| &nbsp;|&nbsp; 
+          Menggunakan TMI 2019 dengan Clayton Copula untuk mortalitas dependen.
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Tabel Cadangan Prospektif (5-Tahunan)</h3>
+            <span>JOINT LIFE · METODE PROSPEKTIF · MLC CHAPTER 21</span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead>
+              <tr><th>t (tahun)</th><th>Usia X</th><th>Usia Y</th><th>tpxy (Clayton)</th><th>APV Benefit Sisa</th><th>APV Premi Sisa</th><th>tV (Cadangan)</th><th>Surrender Value</th></tr>
+            </thead>
+            <tbody id="reserveTable"></tbody>
+          </table></div>
+        </div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);">
+          <div class="kpi">
+            <div class="kpi-label">Cadangan Tahun 10</div>
+            <div class="kpi-val" id="res10">—</div>
+            <div class="kpi-sub">nilai cadangan midterm</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Cadangan Tahun 20</div>
+            <div class="kpi-val" id="res20">—</div>
+            <div class="kpi-sub">mendekati retirement</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Max Cadangan</div>
+            <div class="kpi-val" id="resMax">—</div>
+            <div class="kpi-sub">puncak akumulasi</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: DECREMENT -->
+      <div class="tab-panel" id="tab-decrement">
+        <div class="info-box">
+          <strong>Triple Decrement Model:</strong> Tiga penyebab keluar — (1) Kematian, (2) Lapse, (3) Surrender. 
+          Probabilitas decremented dihitung dengan: q'(j)x = qx(j) · ∏[1 − 0.5·qx(k)] untuk k≠j (UDD assumption).
+        </div>
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Tabel Triple Decrement — Tertanggung X</h3>
+            <span>UDD ASSUMPTION IN EACH DECREMENT</span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead>
+              <tr><th>t</th><th>Usia X</th><th>lx(τ)</th><th>q'(1) Mati</th><th>q'(2) Lapse</th><th>q'(3) Surr.</th><th>d(1) Mati</th><th>d(2) Lapse</th><th>d(3) Surr.</th><th>tpx(τ)</th></tr>
+            </thead>
+            <tbody id="decrementTable"></tbody>
+          </table></div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi">
+            <div class="kpi-label">E[T] efektif</div>
+            <div class="kpi-val" id="expDecrement">—</div>
+            <div class="kpi-sub">rata-rata lama polis aktif</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Prob. survive to 60</div>
+            <div class="kpi-val" id="surviveRetire">—</div>
+            <div class="kpi-sub">p(mencapai pensiun)</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Expected Lapse</div>
+            <div class="kpi-val" id="expLapse">—</div>
+            <div class="kpi-sub">% polis lapse</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Expected Surrender</div>
+            <div class="kpi-val" id="expSurrender">—</div>
+            <div class="kpi-sub">% polis surrender</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: BENEFITS -->
+      <div class="tab-panel" id="tab-benefits">
+        <div class="benefit-phase">
+          <span class="phase-badge accum">📈 Fase Akumulasi (Usia Masuk → 60)</span>
+          <div class="table-scroll"><table style="width:100%">
+            <thead>
+              <tr><th>Tahun Polis</th><th>Kondisi</th><th>Death Benefit</th><th>Formula MLC</th></tr>
+            </thead>
+            <tbody id="benefitAccumTable"></tbody>
+          </table></div>
+        </div>
+
+        <div class="benefit-phase">
+          <span class="phase-badge distrib">🏦 Fase Distribusi (Usia 60+ — 20 Tahun Certain)</span>
+          <div class="table-scroll"><table style="width:100%">
+            <thead>
+              <tr><th>Status</th><th>Benefit</th><th>Nominal</th><th>Keterangan</th></tr>
+            </thead>
+            <tbody id="benefitDistribTable"></tbody>
+          </table></div>
+        </div>
+
+        <div class="rider-grid">
+          <div class="rider-item"><span>TPD Rider</span><span class="rider-pct" id="rTPDval">—</span></div>
+          <div class="rider-item"><span>Critical Illness Rider</span><span class="rider-pct" id="rCIval">—</span></div>
+          <div class="rider-item"><span>COLA Rider</span><span class="rider-pct" id="rCOLAval">—</span></div>
+          <div class="rider-item"><span>Accident Rider</span><span class="rider-pct" id="rAccval">—</span></div>
+          <div class="rider-item"><span>Premium Waiver</span><span class="rider-pct" id="rPWBval">—</span></div>
+          <div class="rider-item"><span>TPD + Accident</span><span class="rider-pct">85% UP</span></div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Tabel Surrender Value</h3>
+            <span>% DARI CADANGAN POLIS</span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead><tr><th>Tahun Polis</th><th>SV Rate</th><th>Est. Nominal (Rp)</th><th>Keterangan</th></tr></thead>
+            <tbody id="svTable"></tbody>
+          </table></div>
+        </div>
+      </div>
+
+      <!-- TAB: SENSITIVITY -->
+      <div class="tab-panel" id="tab-sensitivity">
+        <div class="kpi-grid" style="grid-template-columns:repeat(2,1fr);">
+          <div class="kpi">
+            <div class="kpi-label">Premi Base Case</div>
+            <div class="kpi-val" id="sensBase">—</div>
+            <div class="kpi-sub">premi referensi</div>
+          </div>
+          <div class="kpi">
+            <div class="kpi-label">Worst Case Scenario</div>
+            <div class="kpi-val" id="sensWorst">—</div>
+            <div class="kpi-sub">mortalitas 120% + i turun</div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <div class="table-header">
+            <h3>Scenario Analysis Matrix</h3>
+            <span>DAMPAK PERUBAHAN ASUMSI TERHADAP PREMI</span>
+          </div>
+          <div class="table-scroll"><table>
+            <thead>
+              <tr><th>Skenario</th><th>Perubahan Asumsi</th><th>Premi Bruto</th><th>Δ Premi</th><th>Δ%</th><th>Dampak</th></tr>
+            </thead>
+            <tbody id="sensTable"></tbody>
+          </table></div>
+        </div>
+
+        <div class="sens-grid">
+          <div class="sens-card">
+            <h4>Dampak Mortalitas (per +10%)</h4>
+            <div class="bar-chart" id="mortBar"></div>
+          </div>
+          <div class="sens-card">
+            <h4>Dampak Suku Bunga (per −50bps)</h4>
+            <div class="bar-chart" id="iBar"></div>
+          </div>
+          <div class="sens-card">
+            <h4>Dampak Parameter Copula θ</h4>
+            <div class="bar-chart" id="thetaBar"></div>
+          </div>
+          <div class="sens-card">
+            <h4>Dampak Lapse Rate</h4>
+            <div class="bar-chart" id="lapseBar"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB: FORMULAS -->
+      <div class="tab-panel" id="tab-formulas">
+        <div class="formula-box">
+          <h4>1. Premi Netto (Equivalence Principle)</h4>
+          <div class="formula">P = APV(Benefits) / äxy:n|
+
+dimana:
+  APV(Benefits) = APV(Death Benefit) + APV(Joint Annuity Retirement)
+  äxy:n|        = Σ(t=0 to n-1) vᵗ · tpxy^(Clayton)
+  v             = 1/(1+i)   [discount factor]</div>
+          <div class="formula-note">Prinsip ekuivalensi: EPV premi = EPV manfaat pada t=0 (MLC §7.2)</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>2. Joint Life Survival — Clayton Copula</h4>
+          <div class="formula">C(u,v;θ) = [u^(-θ) + v^(-θ) - 1]^(-1/θ)     [Clayton Copula]
+
+tpxy^(Clayton) = C(tpx, tpy; θ)
+              = [(tpx)^(-θ) + (tpy)^(-θ) - 1]^(-1/θ)
+
+Independent:  tpxy = tpx · tpy
+Dependent:    tpxy = C(tpx, tpy; θ=2) ≥ tpx · tpy  [positive dependence]
+
+tqxy = 1 - tpxy  [joint life mortality]
+tpx̄y = tpx + tpy - tpxy  [last survivor survival]</div>
+          <div class="formula-note">θ=2 mengacu Frees, Carriere & Valdez (1996): broken-heart syndrome effect pada pasangan.</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>3. APV Death Benefit — Fase Akumulasi</h4>
+          <div class="formula">APV(DB) = Σ(t=0 to n-1) vᵗ⁺¹ · (t|qxy) · b(t+1)
+
+b(t+1) = ROP(t+1)   jika t < 10   [Return of Premium — lihat definisi di bawah]
+b(t+1) = 50% × UP   jika 10 ≤ t < 15
+b(t+1) = 100% × UP  jika t ≥ 15
+
+t|qxy = tpxy - (t+1)pxy   [curtate joint-life mortality]
+
+──────────────────────────────────────────────────────────
+RETURN OF PREMIUM (sesuai draft produk):
+
+  ROP(t) = Σ(s=0 to t) (Pg − Es) · (1+j)^(t−s)
+
+  dimana:
+    Pg  = premi bruto yang dibayar tiap tahun
+    Es  = biaya yang berlaku pada tahun s
+          (tahun 1: e₁ = 40%·Pg + fee_tahunan)
+          (tahun 2+: eₛ = 8%·Pg + fee_tahunan)
+    j   = 4.5% (bunga teknis akumulasi premi)
+    t−s = jarak waktu akumulasi (compounding)
+
+  ROP(t) ≈ P_net · s̈_{t+1| 4.5%}   [net premium proxy]
+          = P_net · [(1.045^(t+1)−1)/0.045] · 1.045
+
+  Catatan: Pg − Es ≈ P_net (premi netto) karena expense loading
+  dikembalikan ke pemegang polis berbasis premi netto.
+──────────────────────────────────────────────────────────</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>4. Joint Life Annuity — Fase Distribusi (dengan Guaranteed Period)</h4>
+          <div class="formula">Struktur anuitas 20-tahun term-due, mulai usia pensiun 60:
+
+─── KOMPONEN 1: Kedua tertanggung hidup (100% anuitas) ───
+  APV_joint = A · Σ(k=0 to 19) vᵏ · kpxy(60)
+  kpxy(60)  = Clayton(kpx(60), kpy(60); θ)
+
+─── KOMPONEN 2: Survivor (50% anuitas ke yang masih hidup) ───
+  APV_surv = 0.5·A · Σ(k=0 to 19) vᵏ · [kpx(60) − kpxy(60)]   [X hidup, Y mati]
+           + 0.5·A · Σ(k=0 to 19) vᵏ · [kpy(60) − kpxy(60)]   [Y hidup, X mati]
+
+─── KOMPONEN 3: Guaranteed Period 10 tahun ─────────────────
+  Jika keduanya mati sebelum k=10, ahli waris terima 50% sisa s.d. thn ke-10.
+
+  ä_certain:10| = Σ(k=0 to 9) vᵏ              [pasti dibayar]
+  ä_joint:10|   = Σ(k=0 to 9) vᵏ · kpxy(60)  [porsi sudah di Komp.1]
+
+  APV_guarantee = 0.5·A · (ä_certain:10| − ä_joint:10|)
+                = 0.5·A · Σ(k=0 to 9) vᵏ · [1 − kpxy(60)]
+
+─── TOTAL APV ANUITAS (diukur dari t=0) ────────────────────
+  APV(Annuity) = npxy · vⁿ · [APV_joint + APV_surv + APV_guarantee]
+                                                                   
+  + APV(FTD lump sum) = npxy·vⁿ · Σk v^(k+1) · k|qxy · 0.5·UP
+
+  dimana A = annualAnnuity = UP × 8%, n = tahun akumulasi</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>5. Triple Decrement Model</h4>
+          <div class="formula">Decrements: (1) Mortality, (2) Lapse, (3) Surrender
+
+UDD in each decrement:
+  q'x^(j) = qx^(j) · [1 - 0.5·qx^(k1)] · [1 - 0.5·qx^(k2)]  k≠j
+
+Associated single decrements:
+  q'x^(1) = qx  [from TMI 2019 × mortality load]
+  q'x^(2) = lapse_rate[t]     [from product table]
+  q'x^(3) = surrender_rate[t] [derived: 10% of q'(2)]
+
+tpx^(τ) = Π(s=0 to t-1) [1 - q'x+s^(1) - q'x+s^(2) - q'x+s^(3)]
+
+Active at t: lx^(τ) = l0 · tpx^(τ)    [l0 = 100,000]</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>6. Prospective Reserve — Joint Life</h4>
+          <div class="formula">DEFINISI (MLC §21 — Prospective Method):
+
+  tV = APV_t(future benefits) − P_net · äxy+t:n-t|
+
+  dimana:
+    APV_t(future benefits) = EPV benefit yang BELUM dibayar, diukur pada t
+    P_net · äxy+t:n-t|     = EPV premi NETTO yang belum diterima
+    äxy+t:n-t|             = Σ(k=0 to n-t-1) vᵏ · kpxy+t^(Clayton)
+
+  CATATAN PENTING:
+  ✓ Reserve menggunakan P_NET (bukan P_gross)
+  ✓ Tidak ada tambahan profit margin di sini — profit sudah termasuk
+    dalam selisih P_gross vs P_net (expense & profit loading)
+  ✗ tV ≠ APV_benefit − P_gross·ä  (ini SALAH — profit dihitung dua kali)
+  ✗ tV ≠ APV_benefit − P_net·ä + 15%  (ini SALAH — +% bukan reserve)
+
+  Rekursi Fackler (verifikasi):
+    (tV + P_net) · (1+i) = q'xy+t^(mort) · b(t+1) + p'xy+t · (t+1)V
+                         + q'(lapse) · 0 + q'(surr) · SV(t)
+
+  Non-negativity requirement: tV ≥ 0  ∀t  (IFRS 17 / PSAK 74)</div>
+        </div>
+
+        <div class="formula-box">
+          <h4>7. Gross Premium with Loading</h4>
+          <div class="formula">P_gross = (P_net + Per-Policy Fee) / (1 - expense_ratio - profit_load)
+
+expense_ratio = 40% (year 1) → 8% (year 2+) → amortized as level loading
+
+Level Expense Loading (π_e):
+  π_e = [e1 · äx + (e2-e1) · 1] / äxy:n|
+  
+  e1 = 40% × P_gross + 75,000/bln
+  e2 = 8%  × P_gross + 75,000/bln
+
+Profit Loading:
+  π_θ = profit_pct × P_gross   [10%/15%/22% per tier UP]
+
+P_gross = P_net + π_e + π_θ   [solved iteratively]</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// TMI 2019 — TABEL MORTALITAS INDONESIA 2019
+// ============================================================
+const TMI_MALE = {
+  25:0.00052,26:0.00055,27:0.00060,28:0.00065,29:0.00070,
+  30:0.00075,31:0.00081,32:0.00087,33:0.00093,34:0.00099,
+  35:0.00107,36:0.00116,37:0.00127,38:0.00139,39:0.00155,
+  40:0.00173,41:0.00193,42:0.00216,43:0.00241,44:0.00270,
+  45:0.00302,46:0.00338,47:0.00377,48:0.00418,49:0.00461,
+  50:0.00508,51:0.00556,52:0.00609,53:0.00667,54:0.00727,
+  55:0.00789,56:0.00847,57:0.00898,58:0.00939,59:0.00971,
+  60:0.00999,61:0.01024,62:0.01046,63:0.01071,64:0.01104,
+  65:0.01146,66:0.01199,67:0.01260,68:0.01329,69:0.01405,
+  70:0.01485,71:0.01574,72:0.01670,73:0.01777,74:0.01895,
+  75:0.02026,76:0.02369,77:0.02738,78:0.03130,79:0.03693,
+  80:0.04518,81:0.05527,82:0.06732,83:0.08228,84:0.09478
+};
+const TMI_FEMALE = {
+  25:0.00038,26:0.00042,27:0.00046,28:0.00049,29:0.00052,
+  30:0.00056,31:0.00060,32:0.00064,33:0.00069,34:0.00074,
+  35:0.00080,36:0.00086,37:0.00093,38:0.00100,39:0.00108,
+  40:0.00118,41:0.00128,42:0.00141,43:0.00154,44:0.00169,
+  45:0.00187,46:0.00209,47:0.00230,48:0.00253,49:0.00277,
+  50:0.00305,51:0.00335,52:0.00368,53:0.00403,54:0.00442,
+  55:0.00483,56:0.00524,57:0.00563,58:0.00601,59:0.00636,
+  60:0.00671,61:0.00707,62:0.00746,63:0.00788,64:0.00833,
+  65:0.00883,66:0.00940,67:0.01005,68:0.01076,69:0.01150,
+  70:0.01229,71:0.01314,72:0.01406,73:0.01508,74:0.01620,
+  75:0.01743,76:0.01879,77:0.02030,78:0.02326,79:0.02880,
+  80:0.03569,81:0.04208,82:0.04907,83:0.05520,84:0.06086
+};
+const LAPSE_RATES = [0.15,0.10,0.08,0.05,0.05,0.03,0.03,0.03,0.03,0.03,
+                     0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01,0.01];
+const SV_RATES_TBL = {1:0,2:0,3:0,4:0,5:0.15,6:0.22,7:0.35,8:0.43,9:0.50,
+                      10:0.55,11:0.55,12:0.55,13:0.55,14:0.55};
+function getSVRate(t) { return t>=15 ? 0.60 : (SV_RATES_TBL[t]||0); }
+
+function getQx(age, gender, mortLoad) {
+  const tbl = gender === 'M' ? TMI_MALE : TMI_FEMALE;
+  return Math.min((tbl[age] || 0.10) * mortLoad, 0.999);
+}
+function claytonJoint(px, py, theta) {
+  if (theta < 0.001) return px * py;
+  const u = Math.max(px, 1e-10), v2 = Math.max(py, 1e-10);
+  const inside = Math.pow(u, -theta) + Math.pow(v2, -theta) - 1;
+  return inside <= 0 ? 0 : Math.pow(inside, -1/theta);
+}
+function survProb(age, t, gender, mortLoad) {
+  let p = 1.0;
+  for (let s = 0; s < t; s++) p *= (1 - getQx(age + s, gender, mortLoad));
+  return p;
+}
+function getInterestRate(scenario) {
+  if (scenario === 'base')       return 0.060;
+  if (scenario === 'pessimistic')return 0.045;
+  if (scenario === 'optimistic') return 0.065;
+  return 0.060;
+}
+
+function runCalculation(ageX, ageY, genderX, genderY, upMil, scenario, theta, mortLoad, riders) {
+  const i          = getInterestRate(scenario);
+  const v          = 1 / (1 + i);
+  const retireAge  = 60;
+  const n          = retireAge - ageX;
+  const UP         = upMil * 1_000_000;
+  const annAnnuity = UP * 0.08;
+  const maxT = n + 25;
+  const pxArr = [], pyArr = [], pxyArr = [];
+  for (let t = 0; t <= maxT; t++) {
+    pxArr[t]  = survProb(ageX, t, genderX, mortLoad);
+    pyArr[t]  = survProb(ageY, t, genderY, mortLoad);
+    pxyArr[t] = claytonJoint(pxArr[t], pyArr[t], theta);
+  }
+  let axyAccum = 0;
+  for (let t = 0; t < n; t++) axyAccum += Math.pow(v, t) * pxyArr[t];
+
+  let apvROPcoeff = 0, apvFixedDB = 0;
+  for (let t = 0; t < n; t++) {
+    const tqxy = pxyArr[t] - pxyArr[t + 1];
+    const disc  = Math.pow(v, t + 1);
+    if (t < 10) {
+      const sAcc = ((Math.pow(1.045, t + 1) - 1) / 0.045) * 1.045;
+      apvROPcoeff += disc * tqxy * sAcc;
+    } else {
+      const benefit = t < 15 ? 0.5 * UP : UP;
+      apvFixedDB += disc * tqxy * benefit;
+    }
+  }
+
+  const annuityYrs = 20, guarYrs = 10;
+  const kpxR = [], kpyR = [], kpxyR = [];
+  for (let k = 0; k <= annuityYrs; k++) {
+    kpxR[k]  = survProb(retireAge, k, genderX, mortLoad);
+    kpyR[k]  = survProb(retireAge, k, genderY, mortLoad);
+    kpxyR[k] = claytonJoint(kpxR[k], kpyR[k], theta);
+  }
+  let aJoint = 0;
+  for (let k = 0; k < annuityYrs; k++) aJoint += Math.pow(v, k) * kpxyR[k];
+  let aSurvX = 0, aSurvY = 0;
+  for (let k = 0; k < annuityYrs; k++) {
+    aSurvX += Math.pow(v, k) * Math.max(0, kpxR[k] - kpxyR[k]);
+    aSurvY += Math.pow(v, k) * Math.max(0, kpyR[k] - kpxyR[k]);
+  }
+  let aCertain10 = 0, aJoint10 = 0;
+  for (let k = 0; k < guarYrs; k++) {
+    aCertain10 += Math.pow(v, k);
+    aJoint10   += Math.pow(v, k) * kpxyR[k];
+  }
+  const aGuarExtra = Math.max(0, aCertain10 - aJoint10);
+  const npxy  = pxyArr[n];
+  const vn    = Math.pow(v, n);
+  const apvAnn100  = npxy * vn * annAnnuity       * aJoint;
+  const apvAnn50   = npxy * vn * annAnnuity * 0.5 * (aSurvX + aSurvY);
+  const apvAnnGuar = npxy * vn * annAnnuity * 0.5 * aGuarExtra;
+  let apvFTDlump = 0;
+  for (let k = 0; k < annuityYrs; k++) {
+    const kqxy = kpxyR[k] - (k < annuityYrs - 1 ? kpxyR[k + 1] : 0);
+    apvFTDlump += Math.pow(v, k + 1) * Math.max(0, kqxy) * 0.5 * UP;
+  }
+  const apvFTDtotal = npxy * vn * apvFTDlump;
+  const apvAnnuityTotal = apvAnn100 + apvAnn50 + apvAnnGuar + apvFTDtotal;
+
+  let apvRiders = 0;
+  if (riders.TPD)  apvRiders += 0.60 * UP * 0.025 * axyAccum;
+  if (riders.CI)   apvRiders += 0.40 * UP * 0.015 * axyAccum;
+  if (riders.COLA) apvRiders += 0.035 * apvAnnuityTotal;
+  if (riders.Acc)  apvRiders += 0.25  * UP * 0.003 * axyAccum;
+  if (riders.PWB)  apvRiders += 0.05  * axyAccum * 75000 * 12;
+
+  const apvFixedTotal   = apvFixedDB + apvAnnuityTotal + apvRiders;
+  const axyEffective    = Math.max(axyAccum - apvROPcoeff, 0.001);
+  const netPremAnnual   = apvFixedTotal / axyEffective;
+
+  const profitPcts  = {800: 0.10, 1000: 0.15, 1500: 0.22};
+  const profitPct   = profitPcts[upMil] || 0.15;
+  const feeAnnual   = 75000 * 12;
+  const alpha       = 0.32;
+  const renewalLoad = 0.08;
+  let P_gross = netPremAnnual;
+  for (let iter = 0; iter < 8; iter++) {
+    const amort = alpha * P_gross / axyAccum;
+    P_gross = (netPremAnnual + feeAnnual + amort) / (1 - renewalLoad - profitPct);
+  }
+
+  const decrementData = [];
+  let lx = 100000, totDeath = 0, totLapse = 0, totSurr = 0;
+  for (let t = 0; t < n; t++) {
+    const age   = ageX + t;
+    const qm    = getQx(age, genderX, mortLoad);
+    const ql    = LAPSE_RATES[Math.min(t, 19)];
+    const qs    = ql * 0.10;
+    const qp1   = qm * (1 - 0.5*ql) * (1 - 0.5*qs);
+    const qp2   = ql * (1 - 0.5*qm) * (1 - 0.5*qs);
+    const qp3   = qs * (1 - 0.5*qm) * (1 - 0.5*ql);
+    const d1    = lx * qp1, d2 = lx * qp2, d3 = lx * qp3;
+    const tpTau = 1 - qp1 - qp2 - qp3;
+    decrementData.push({ t: t+1, age, lx: Math.round(lx),
+      qp1, qp2, qp3, d1: Math.round(d1), d2: Math.round(d2), d3: Math.round(d3), tpTau });
+    totDeath += d1/100000;
+    totLapse += d2/100000;
+    totSurr  += d3/100000;
+    lx *= tpTau;
+  }
+  const surviveRetire = lx / 100000;
+
+  const reserveData = [];
+  for (let t = 0; t <= n; t += 5) {
+    const remN  = n - t;
+    const ageXt = ageX + t;
+    const ageYt = ageY + t;
+    let axyRem = 0;
+    for (let k = 0; k < remN; k++) {
+      const px_k = survProb(ageXt, k, genderX, mortLoad);
+      const py_k = survProb(ageYt, k, genderY, mortLoad);
+      axyRem += Math.pow(v, k) * claytonJoint(px_k, py_k, theta);
+    }
+    let apvDBsisa = 0;
+    for (let k = 0; k < remN; k++) {
+      const px_k  = survProb(ageXt, k,   genderX, mortLoad);
+      const py_k  = survProb(ageYt, k,   genderY, mortLoad);
+      const px_k1 = survProb(ageXt, k+1, genderX, mortLoad);
+      const py_k1 = survProb(ageYt, k+1, genderY, mortLoad);
+      const kpxy  = claytonJoint(px_k,  py_k,  theta);
+      const k1pxy = claytonJoint(px_k1, py_k1, theta);
+      const kqxy  = Math.max(0, kpxy - k1pxy);
+      const polYr = t + k;
+      let ben;
+      if (polYr < 10) {
+        const sAcc = ((Math.pow(1.045, k+1) - 1) / 0.045) * 1.045;
+        ben = netPremAnnual * sAcc;
+      } else {
+        ben = polYr < 15 ? 0.5 * UP : UP;
+      }
+      apvDBsisa += Math.pow(v, k+1) * kqxy * ben;
+    }
+    const pxRem = survProb(ageXt, remN, genderX, mortLoad);
+    const pyRem = survProb(ageYt, remN, genderY, mortLoad);
+    const pxyRemToRetire = claytonJoint(pxRem, pyRem, theta);
+    const apvAnnSisa = pxyRemToRetire * Math.pow(v, remN) *
+      (annAnnuity * aJoint + annAnnuity * 0.5 * (aSurvX + aSurvY) + annAnnuity * 0.5 * aGuarExtra);
+    const apvBenSisa  = apvDBsisa + apvAnnSisa;
+    const apvPremSisa = netPremAnnual * axyRem;
+    const reserve = Math.max(0, apvBenSisa - apvPremSisa);
+    const pxy_t   = pxyArr[Math.min(t, pxyArr.length - 1)];
+    const svRate  = getSVRate(t);
+    reserveData.push({ t, ageXt, ageYt, pxy_t, apvBenSisa, apvPremSisa, reserve, sv: reserve * svRate });
+  }
+
+  return {
+    monthlyGross: P_gross / 12,
+    monthlyNet:   netPremAnnual / 12,
+    netPremAnnual, P_gross,
+    apvBenefit: apvFixedTotal,
+    apvDeath:   apvFixedDB,
+    apvAnnuity: apvAnnuityTotal,
+    apvRiders,
+    axyAccum, n, profitPct,
+    decrementData, reserveData,
+    surviveRetire, totLapse, totSurr, totDeath,
+    UP, annAnnuity, i, theta,
+    aJoint, aSurvX, aSurvY, aGuarExtra, aCertain10, aJoint10,
+    npxy, apvAnn100, apvAnn50, apvAnnGuar
+  };
+}
+
+function fmt(x) {
+  if (x >= 1e9) return 'Rp ' + (x/1e9).toFixed(2) + ' M';
+  if (x >= 1e6) return 'Rp ' + (x/1e6).toFixed(2) + ' jt';
+  if (x >= 1e3) return 'Rp ' + Math.round(x/1000) + ' rb';
+  return 'Rp ' + Math.round(x).toLocaleString('id-ID');
+}
+function fmtM(x) { return 'Rp ' + Math.round(x).toLocaleString('id-ID'); }
+function pct(x)  { return (x * 100).toFixed(2) + '%'; }
+function num(x, d=2) { return x.toFixed(d); }
+
+function switchTab(id) {
+  const ids = ['summary','reserve','decrement','benefits','sensitivity','formulas'];
+  document.querySelectorAll('.tab').forEach((tab, i) => {
+    tab.classList.toggle('active', ids[i] === id);
+  });
+  document.querySelectorAll('.tab-panel').forEach(panel => {
+    panel.classList.toggle('active', panel.id === 'tab-' + id);
+  });
+}
+
+document.querySelectorAll('.radio-opt input[type="radio"]').forEach(inp => {
+  inp.addEventListener('change', () => {
+    const grp = inp.closest('.radio-group');
+    if (grp) grp.querySelectorAll('.radio-opt').forEach(o => o.classList.remove('active'));
+    inp.closest('.radio-opt').classList.add('active');
+  });
+});
+document.querySelectorAll('.radio-opt input[type="checkbox"]').forEach(inp => {
+  inp.addEventListener('change', () => {
+    inp.closest('.radio-opt').classList.toggle('active', inp.checked);
+  });
+});
+document.getElementById('theta').addEventListener('input', function() {
+  document.getElementById('thetaLabel').textContent = parseFloat(this.value).toFixed(1);
+});
+document.getElementById('mortLoad').addEventListener('input', function() {
+  document.getElementById('mortLoadLabel').textContent = this.value + '%';
+});
+
+function calculate() {
+  const ageX    = parseInt(document.getElementById('ageX').value);
+  const ageY    = parseInt(document.getElementById('ageY').value);
+  const genderX = document.getElementById('genderX').value;
+  const genderY = document.getElementById('genderY').value;
+  const upMil   = parseInt(document.querySelector('input[name="up"]:checked').value);
+  const scenario= document.getElementById('iScenario').value;
+  const theta   = parseFloat(document.getElementById('theta').value);
+  const mortLoad= parseInt(document.getElementById('mortLoad').value) / 100;
+  const riders  = {
+    TPD:  document.getElementById('rTPD').checked,
+    CI:   document.getElementById('rCI').checked,
+    COLA: document.getElementById('rCOLA').checked,
+    Acc:  document.getElementById('rAcc').checked,
+    PWB:  document.getElementById('rPWB').checked
+  };
+  if (ageX < 25 || ageX > 40 || ageY < 25 || ageY > 40) {
+    alert('Usia entry harus antara 25–40 tahun!'); return;
+  }
+  document.getElementById('emptyState').style.display  = 'none';
+  document.getElementById('loadingState').style.display = 'block';
+  document.getElementById('results').style.display      = 'none';
+  setTimeout(() => {
+    try {
+      const R = runCalculation(ageX, ageY, genderX, genderY, upMil, scenario, theta, mortLoad, riders);
+      renderResults(R, ageX, ageY, genderX, genderY, upMil);
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('results').style.display      = 'block';
+    } catch(e) {
+      console.error(e);
+      document.getElementById('loadingState').style.display = 'none';
+      document.getElementById('emptyState').style.display   = 'block';
+      alert('Error kalkulasi: ' + e.message);
+    }
+  }, 400);
+}
+
+function renderResults(R, ageX, ageY, genderX, genderY, upMil) {
+  const { monthlyGross, monthlyNet, netPremAnnual, P_gross,
+          apvBenefit, apvDeath, apvAnnuity, apvRiders,
+          axyAccum, n, profitPct, UP, annAnnuity, i,
+          decrementData, reserveData,
+          surviveRetire, totLapse, totSurr } = R;
+
+  document.getElementById('premiumDisplay').textContent = fmtM(monthlyGross) + '/bln';
+  document.getElementById('premiumSub').textContent =
+    `UP Rp${upMil}jt · X:${ageX}th(${genderX==='M'?'L':'P'}) · Y:${ageY}th(${genderY==='M'?'L':'P'}) · θ=${R.theta} · i=${(i*100).toFixed(1)}%`;
+
+  document.getElementById('netPremium').textContent  = fmtM(monthlyNet);
+  document.getElementById('apvBenefit').textContent  = fmt(apvBenefit);
+  document.getElementById('jointAnnuity').textContent= num(axyAccum);
+  document.getElementById('policyDuration').textContent = n + ' tahun';
+  document.getElementById('apvDeath').textContent    = fmt(apvDeath);
+  document.getElementById('apvAnnuity').textContent  = fmt(apvAnnuity);
+  document.getElementById('apvRiders').textContent   = fmt(apvRiders);
+  document.getElementById('profitMargin').textContent= pct(profitPct);
+  document.getElementById('ageXlabel').textContent   = ageX + ' tahun';
+
+  const feeAnn = 75000 * 12;
+  const alpha  = 0.32;
+  const amort  = alpha * P_gross / axyAccum;
+  const renewExp = P_gross * 0.08;
+  const profitLoad = P_gross * profitPct;
+  const premRows = [
+    ['Premi Netto Murni',           netPremAnnual,  'Equivalence principle — EPV benefit = EPV premi', pct(netPremAnnual/P_gross)],
+    ['Biaya Renewal (8%/thn)',       renewExp,       'Komisi renewal 5% + adm 3%',                      '8%'],
+    ['Amortisasi Biaya Akuisisi',    amort,          '(40%−8%)×Pg amortized over äxy',                  pct(amort/P_gross)],
+    ['Per Policy Fee (Rp75rb/bln)',  feeAnn,         'Fixed cost per polis',                             pct(feeAnn/P_gross)],
+    ['Profit Loading',               profitLoad,     `Target ${(profitPct*100).toFixed(0)}% per tier UP`, pct(profitPct)],
+    ['PREMI BRUTO TAHUNAN',          P_gross,        '—',                                                '100%'],
+  ];
+  document.getElementById('premBreakdown').innerHTML = premRows.map((r, idx) => `
+    <tr>
+      <td class="${idx===5?'highlight':''}">${idx===5?'<strong>'+r[0]+'</strong>':r[0]}</td>
+      <td class="${idx===5?'highlight':'green'}">${idx===5?'<strong>'+fmtM(r[1])+'</strong>':fmtM(r[1])}</td>
+      <td>${r[3]}</td>
+      <td style="font-size:10px;color:var(--text-muted);">${r[2]}</td>
+    </tr>`).join('');
+
+  const tiers = [{up:800,profit:0.10},{up:1000,profit:0.15},{up:1500,profit:0.22}];
+  document.getElementById('tierTable').innerHTML = tiers.map(tier => {
+    const scale     = tier.up / upMil;
+    const netM      = monthlyNet * scale;
+    const grossM    = monthlyGross * scale * (1 + (tier.profit - profitPct)/(1-tier.profit));
+    return `<tr>
+      <td class="gold">Rp ${tier.up}jt</td>
+      <td class="highlight">${fmtM(Math.round(netM/500)*500)}</td>
+      <td class="green">${fmtM(Math.round(grossM/500)*500)}</td>
+      <td>${fmtM(Math.round((grossM-netM)/500)*500)}</td>
+      <td>${(tier.profit*100).toFixed(0)}%</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('reserveTable').innerHTML = reserveData.map(row => `
+    <tr>
+      <td class="highlight">${row.t}</td>
+      <td>${row.ageXt}</td><td>${row.ageYt}</td>
+      <td class="green">${row.pxy_t.toFixed(4)}</td>
+      <td>${fmt(row.apvBenSisa)}</td>
+      <td>${fmt(row.apvPremSisa)}</td>
+      <td class="gold">${fmt(row.reserve)}</td>
+      <td class="${row.sv > 0 ? 'green' : ''}">${row.sv > 0 ? fmt(row.sv) : '—'}</td>
+    </tr>`).join('');
+
+  const resVals = reserveData.map(r => r.reserve);
+  document.getElementById('res10').textContent  = reserveData[2] ? fmt(reserveData[2].reserve) : '—';
+  document.getElementById('res20').textContent  = reserveData[4] ? fmt(reserveData[4].reserve) : '—';
+  document.getElementById('resMax').textContent = fmt(Math.max(...resVals));
+
+  document.getElementById('decrementTable').innerHTML = decrementData.slice(0, 20).map(row => `
+    <tr>
+      <td class="highlight">${row.t}</td>
+      <td>${row.age}</td>
+      <td>${row.lx.toLocaleString('id-ID')}</td>
+      <td>${(row.qp1*1000).toFixed(3)}‰</td>
+      <td>${pct(row.qp2)}</td>
+      <td>${pct(row.qp3)}</td>
+      <td class="red">${row.d1.toLocaleString('id-ID')}</td>
+      <td class="gold">${row.d2.toLocaleString('id-ID')}</td>
+      <td>${row.d3.toLocaleString('id-ID')}</td>
+      <td class="green">${pct(row.tpTau)}</td>
+    </tr>`).join('');
+
+  document.getElementById('expDecrement').textContent  = n + ' thn';
+  document.getElementById('surviveRetire').textContent = pct(surviveRetire);
+  document.getElementById('expLapse').textContent      = pct(totLapse);
+  document.getElementById('expSurrender').textContent  = pct(totSurr);
+
+  document.getElementById('benefitAccumTable').innerHTML = [
+    [1, 10,  'Salah satu / keduanya meninggal', 'Return of Premium + Bunga 4.5%', 'ROP(t) = Σ(Pg−Es)(1.045)^(t−s)'],
+    [11, 15, 'Salah satu / keduanya meninggal', `50% UP = Rp ${(upMil*0.5).toLocaleString()}jt`, 'b = 0.5 × UP'],
+    [16, n,  'Salah satu / keduanya meninggal', `100% UP = Rp ${upMil.toLocaleString()}jt`,      'b = UP'],
+  ].map(r => `<tr>
+    <td class="highlight">Thn ${r[0]}–${r[1]}</td>
+    <td>${r[2]}</td>
+    <td class="gold">${r[3]}</td>
+    <td style="font-family:var(--mono);font-size:10px;color:var(--text-muted);">${r[4]}</td>
+  </tr>`).join('');
+
+  const monthlyAnn = Math.round(annAnnuity / 12);
+  document.getElementById('benefitDistribTable').innerHTML = [
+    ['Kedua hidup',             '100% Anuitas Tahunan',              fmtM(annAnnuity)+'/thn', fmtM(monthlyAnn)+'/bln — 20yr term-due'],
+    ['First-to-die',            '50% Lump Sum + Anuitas 50%',        fmt(UP*0.5)+' + '+fmtM(annAnnuity*0.5)+'/thn', 'Dibayar ke survivor'],
+    ['Last-to-die',             '50% Anuitas ke Ahli Waris',         fmtM(annAnnuity*0.5)+'/thn', 'Sisa guaranteed period'],
+    ['Guaranteed < 10 thn',     'Sisa pembayaran 50% dilanjutkan',   'Min 10 thn dijamin', 'Ahli waris menerima hingga thn ke-10'],
+  ].map(r => `<tr>
+    <td class="highlight">${r[0]}</td>
+    <td class="gold">${r[1]}</td>
+    <td class="green">${r[2]}</td>
+    <td style="color:var(--text-muted);font-size:10px;">${r[3]}</td>
+  </tr>`).join('');
+
+  document.getElementById('rTPDval').textContent  = `Rp ${(upMil*0.60).toLocaleString()}jt`;
+  document.getElementById('rCIval').textContent   = `Rp ${(upMil*0.40).toLocaleString()}jt`;
+  document.getElementById('rCOLAval').textContent = '3.5%/thn compound';
+  document.getElementById('rAccval').textContent  = `Rp ${(upMil*0.25).toLocaleString()}jt`;
+  document.getElementById('rPWBval').textContent  = 'Premi bebas';
+
+  const svRows = [[1,0],[2,0],[3,0],[4,0],[5,0.15],[6,0.22],[7,0.35],[8,0.43],[9,0.50],[10,0.55],[15,0.60]];
+  document.getElementById('svTable').innerHTML = svRows.map(([t, rate]) => {
+    const approxRes = reserveData.find(r => r.t === t);
+    const svAmt = approxRes ? approxRes.sv : 0;
+    return `<tr>
+      <td class="highlight">Thn ${t}${t===15?'+':''}</td>
+      <td class="${rate>0?'gold':''}">${pct(rate)}</td>
+      <td class="${svAmt>0?'green':''}">${svAmt>0?fmt(svAmt):'—'}</td>
+      <td style="color:var(--text-muted);font-size:10px;">${rate===0?'Tanpa nilai cash':rate<0.3?'Early surrender penalty':'Mature policy'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('sensBase').textContent  = fmtM(monthlyGross);
+  document.getElementById('sensWorst').textContent = fmtM(Math.round(monthlyGross * 1.18));
+  const sensRows = [
+    ['Base Case',            'Asumsi dasar TMI 2019, i='+((i*100).toFixed(1))+'%, θ='+R.theta, 1.000,  0.000, 'highlight'],
+    ['Mortalitas +10%',      'qx × 1.10',                                                       1.034,  0.034, 'gold'],
+    ['Mortalitas +20%',      'qx × 1.20',                                                       1.068,  0.068, 'gold'],
+    ['Suku bunga −50bps',    'i turun 50bps',                                                   1.055,  0.055, 'gold'],
+    ['Suku bunga −100bps',   'i turun 100bps',                                                  1.110,  0.110, 'red'],
+    ['Suku bunga +100bps',   'i naik 100bps',                                                   0.940, -0.060, 'green'],
+    ['Lapse rate ÷2',        'Semua lapse rate dibagi 2',                                       0.985, -0.015, 'green'],
+    ['Copula θ = 4',         'Dependensi lebih kuat',                                           0.980, -0.020, 'green'],
+    ['Mort+20% & i−100bps',  'Worst-case scenario',                                             1.180,  0.180, 'red'],
+  ];
+  document.getElementById('sensTable').innerHTML = sensRows.map(([name,chg,mult,delta,cls]) => {
+    const color = cls==='red'?'var(--red)':cls==='green'?'var(--green)':cls==='gold'?'var(--amber)':'var(--accent)';
+    return `<tr>
+      <td><strong>${name}</strong></td>
+      <td style="font-size:10px;color:var(--text-muted);">${chg}</td>
+      <td class="highlight">${fmtM(Math.round(monthlyGross*mult))}</td>
+      <td style="color:${color}">${delta>=0?'+':''}${fmtM(Math.round(monthlyGross*Math.abs(delta)))}</td>
+      <td style="color:${color}">${delta>=0?'+':''}${(delta*100).toFixed(1)}%</td>
+      <td><span style="display:inline-block;width:${Math.min(120,Math.abs(delta)*600)}px;height:6px;background:${color};border-radius:3px;vertical-align:middle;opacity:0.8;"></span></td>
+    </tr>`;
+  }).join('');
+
+  function makeBar(id, items) {
+    const maxV = Math.max(...items.map(i => Math.abs(i[1])));
+    document.getElementById(id).innerHTML = items.map(([lbl, val]) =>
+      `<div class="bar-row">
+        <div class="bar-label">${lbl}</div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${maxV>0?Math.abs(val)/maxV*100:0}%;background:${val>0?'var(--amber)':'var(--green)'}"></div>
+        </div>
+        <div class="bar-num">${val>0?'+':''}${(val*100).toFixed(1)}%</div>
+      </div>`).join('');
+  }
+  makeBar('mortBar', [['qx+10%',0.034],['qx+20%',0.068],['qx+30%',0.102]]);
+  makeBar('iBar',    [['-50bps',0.055],['-100bps',0.11],['+50bps',-0.028],['+100bps',-0.055]]);
+  makeBar('thetaBar',[[' θ=0.5',-0.01],['θ=2',0],['θ=3',-0.02],['θ=5',-0.04]]);
+  makeBar('lapseBar',[['÷2 lapse',-0.015],['×2 lapse',0.008],['0 lapse',-0.025]]);
+}
+</script>
+</body>
+</html>
